@@ -21,7 +21,7 @@ jobs:
       - name: Prepare web files
         run: |
           mkdir www
-          cp index.html www/index.html
+          cp index-1.html www/index.html
 
       - name: Create Android project
         run: |
