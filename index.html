@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SAMI SPORT</title>
+<style>
+:root{--bg:#0c2418;--card:#12301f;--tx:#f2f0e4;--mut:#8fae9b;--ac:#e8d44d;--bd:#2c5a40;--rd:#a33a3a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,"Segoe UI",Tahoma,sans-serif;padding-bottom:72px}
+header{padding:18px 16px 12px;text-align:center;border-bottom:2px solid var(--bd)}
+header b{font-size:22px;color:var(--ac);letter-spacing:1px}
+header small{display:block;color:var(--mut);margin-top:2px}
+main{padding:12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:12px}
+input,select,button{font:inherit;padding:11px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)}
+button{background:var(--ac);color:#1b2a10;border:0;font-weight:700}
+button.d{background:var(--rd);color:#fff;padding:6px 11px;flex:none}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.row>*{flex:1;min-width:0}
+table{width:100%;border-collapse:collapse;font-size:14px;text-align:center}
+th{color:var(--mut);font-weight:600}
+th,td{padding:9px 3px;border-bottom:1px solid var(--bd)}
+.n{text-align:right}
+tr.top td{color:var(--ac)}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:2px solid var(--bd)}
+nav button{flex:1;background:none;color:var(--mut);border-radius:0;padding:16px 4px}
+nav button.on{color:var(--ac);box-shadow:inset 0 3px var(--ac)}
+.m{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--bd)}
+.m span{flex:1}
+.sc{color:var(--ac);font-weight:700;text-align:center}
+.m span:last-of-type{text-align:left}
+.e{color:var(--mut);text-align:center;padding:18px}
+</style>
+</head>
+<body>
+<header><b>SAMI SPORT</b><small>إدارة الدوري</small></header>
+<main id="v"></main>
+<nav id="nv"></nav>
+<script>
+let S={teams:[],matches:[]},tab='t';
+try{S=JSON.parse(localStorage.getItem('sami'))||S}catch(e){}
+const $=i=>document.getElementById(i);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const save=()=>{try{localStorage.setItem('sami',JSON.stringify(S))}catch(e){}render()};
+function table(){
+  const r={};
+  S.teams.forEach(t=>r[t.id]={n:t.name,p:0,w:0,d:0,l:0,f:0,a:0});
+  S.matches.forEach(m=>{
+    const h=r[m.h],a=r[m.a];if(!h||!a)return;
+    h.p++;a.p++;h.f+=m.hs;h.a+=m.as;a.f+=m.as;a.a+=m.hs;
+    if(m.hs>m.as){h.w++;a.l++}else if(m.hs<m.as){a.w++;h.l++}else{h.d++;a.d++}
+  });
+  return Object.values(r).map(x=>({...x,gd:x.f-x.a,pt:x.w*3+x.d}))
+    .sort((x,y)=>y.pt-x.pt||y.gd-x.gd||y.f-x.f);
+}
+function render(){
+  const T=Object.fromEntries(S.teams.map(t=>[t.id,t.name]));
+  let h='';
+  if(tab==='t'){
+    const r=table();
+    h=r.length?`<div class="card"><table><tr><th>#</th><th class="n">الفريق</th><th>لعب</th><th>فاز</th><th>تعادل</th><th>خسر</th><th>فارق</th><th>نقاط</th></tr>${r.map((x,i)=>`<tr class="${i==0?'top':''}"><td>${i+1}</td><td class="n">${esc(x.n)}</td><td>${x.p}</td><td>${x.w}</td><td>${x.d}</td><td>${x.l}</td><td>${x.gd}</td><td><b>${x.pt}</b></td></tr>`).join('')}</table></div>`:'<div class="e">أضف الفرق من تبويب «الفرق» لبدء الترتيب</div>';
+  }
+  if(tab==='e'){
+    h=`<div class="card"><div class="row"><input id="tn" placeholder="اسم الفريق"><button onclick="addT()" style="flex:none">إضافة فريق</button></div></div><div class="card">${S.teams.map(t=>`<div class="m"><span>${esc(t.name)}</span><button class="d" onclick="delT('${t.id}')">حذف</button></div>`).join('')||'<div class="e">لا توجد فرق بعد</div>'}</div>`;
+  }
+  if(tab==='m'){
+    const o=S.teams.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+    h=S.teams.length<2?'<div class="e">أضف فريقين على الأقل من تبويب «الفرق»</div>':`<div class="card"><div class="row"><select id="mh">${o}</select><select id="ma">${o}</select></div><div class="row"><input id="sh" type="number" min="0" inputmode="numeric" placeholder="أهداف الأول"><input id="sa" type="number" min="0" inputmode="numeric" placeholder="أهداف الثاني"></div><button style="width:100%" onclick="addM()">حفظ النتيجة</button></div>`;
+    h+=`<div class="card">${S.matches.slice().reverse().map(m=>`<div class="m"><span>${esc(T[m.h]||'؟')}</span><span class="sc">${m.hs} - ${m.as}</span><span>${esc(T[m.a]||'؟')}</span><button class="d" onclick="delM('${m.id}')">×</button></div>`).join('')||'<div class="e">لا توجد مباريات بعد</div>'}</div>`;
+  }
+  $('v').innerHTML=h;
+  if($('ma'))$('ma').selectedIndex=1;
+  $('nv').innerHTML=[['t','الترتيب'],['m','المباريات'],['e','الفرق']].map(([k,n])=>`<button class="${tab===k?'on':''}" onclick="tab='${k}';render()">${n}</button>`).join('');
+}
+function addT(){
+  const n=$('tn').value.trim();if(!n)return;
+  if(S.teams.some(t=>t.name===n)){alert('هذا الفريق موجود');return}
+  S.teams.push({id:uid(),name:n});save();
+}
+function delT(i){
+  if(!confirm('حذف الفريق وكل مبارياته؟'))return;
+  S.teams=S.teams.filter(t=>t.id!==i);
+  S.matches=S.matches.filter(m=>m.h!==i&&m.a!==i);save();
+}
+function addM(){
+  const h=$('mh').value,a=$('ma').value,hs=parseInt($('sh').value),as=parseInt($('sa').value);
+  if(h===a){alert('اختر فريقين مختلفين');return}
+  if(isNaN(hs)||isNaN(as)){alert('أدخل نتيجة الفريقين');return}
+  S.matches.push({id:uid(),h,a,hs,as});save();
+}
+function delM(i){S.matches=S.matches.filter(m=>m.id!==i);save()}
+render();
+</script>
+</body>
+</html>
